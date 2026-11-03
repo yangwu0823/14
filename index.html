@@ -1,0 +1,319 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>14 人格心座測驗</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one question per screen, sticky progress band, 130-cell answer map; result = profile curve + ranked bars */
+:root{
+  --bg:#eef1ef; --surface:#ffffff; --ink:#1d2a2e; --muted:#5f6f72; --line:#d3dbd9;
+  --accent:#23527c; --accent-soft:#dce7f1; --mark:#b8862b; --on-accent:#ffffff;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141b1e; --surface:#1d272b; --ink:#e7eeec; --muted:#97a8aa; --line:#2e3c40;
+  --accent:#86b3dc; --accent-soft:#233646; --mark:#ddb460; --on-accent:#0f1a22; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141b1e; --surface:#1d272b; --ink:#e7eeec; --muted:#97a8aa; --line:#2e3c40;
+  --accent:#86b3dc; --accent-soft:#233646; --mark:#ddb460; --on-accent:#0f1a22; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.7 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:620px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:30px;font-weight:900;letter-spacing:.04em}
+h2{font-size:20px;font-weight:600}
+.eyebrow{font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:16px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:12px 16px;transition:background .15s,border-color .15s}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.ghost{background:none}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.rule{font-size:14px;display:flex;gap:16px;flex-wrap:wrap}
+.rule b{color:var(--accent)}
+
+/* quiz */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.bar .top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.qnum{font-family:var(--display);font-size:56px;font-weight:900;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.qnum small{font-size:16px;color:var(--muted);font-weight:600;margin-left:4px}
+.qtext{font-size:19px;line-height:1.8;min-height:7.2em}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.opts button{padding:16px 6px;font-weight:700;font-size:17px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.opts button span{font-size:12px;font-weight:400;color:var(--muted)}
+.opts button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.opts button.on span{color:var(--on-accent);opacity:.8}
+.nav{display:flex;justify-content:space-between;gap:10px}
+.nav button{flex:0 1 auto}
+.map{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.map button{padding:6px 0;font-size:12px;border-radius:6px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.map button.done{background:var(--accent-soft);color:var(--ink);border-color:transparent}
+.map button.cur{border-color:var(--accent);border-width:2px;color:var(--accent);font-weight:700}
+.map button.miss{border-color:var(--mark);color:var(--mark)}
+.hint{font-size:12px;color:var(--muted)}
+
+/* result */
+.who{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.who b{color:var(--ink);font-weight:500}
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.podium div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;text-align:center;min-width:0}
+.podium div:first-child{border-color:var(--accent);background:var(--accent-soft)}
+.podium .rk{font-size:12px;color:var(--muted)}
+.podium .nm{font-family:var(--display);font-size:20px;font-weight:900}
+.podium .sc{font-size:14px;color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700}
+.chartbox{overflow-x:auto}
+.chartbox svg{display:block;min-width:560px;width:100%;height:auto}
+.bars{display:flex;flex-direction:column;gap:8px}
+.b{display:grid;grid-template-columns:4.6em 1fr 3.2em;align-items:center;gap:10px;font-size:14px}
+.b .t{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
+.b .t i{display:block;height:100%;background:var(--muted);border-radius:6px}
+.b.hi .t i{background:var(--accent)}
+.b.hi{font-weight:700}
+.b .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.toast{font-size:13px;color:var(--accent);min-height:1.4em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+var TYPES=["水牛","孔雀","禿鷹","白兔","獵犬","綿羊","獅子","變色龍","貓頭鷹","黑豹","無尾熊","貓","蜜蜂","駱駝"];
+var MAP=[[3,6,16,31,57,76,98,107,117],[22,27,41,48,66,79,87,115,119],[4,43,49,67,71,85,88,93,124],[9,20,38,61,62,73,89,95,122],[10,40,50,59,68,84,101,102,127],[2,29,42,54,78,82,91,100,116],[7,11,32,56,60,77,105,112,120],[18,23,45,51,72,74,106,121,123],[12,24,35,37,44,47,53,75,80],[13,15,19,25,46,52,65,99,110],[8,36,39,58,70,86,96,108,113],[1,5,21,33,64,94,97,109,129],[28,30,55,69,92,104,125,128,130],[14,17,24,44,63,81,103,111,118]];
+var Q=[
+"我對科技、知識、性靈方面的新發展、新發現很感興趣,也會不斷地充實自己這方面的知識。",
+"在我做任何決定前,即使是生活中的小事,我也總是喜歡徵求朋友或家人的建議和看法。",
+"我是個有條理的人,喜歡把該做的事逐項地規劃出來,可是有時列出來的項目,多到我自己不知該如何下手。",
+"我對暴力、武器和功夫相當痴迷,我喜歡那些充滿暴力和打鬥的電影或是影集。",
+"我有很豐富的想像力,當別人向我描述一個物品或事件時,我可以在腦海中很清楚地描繪該項物品或事件的影像。",
+"當我做決定時,我必須要考慮周詳,且分析它的來龍去脈後,才能做下明確的抉擇,有時人會認為我優柔寡斷。",
+"我很清楚地瞭解自我的能力、天賦、想從事的工作,以及什麼對我而言才是人生最重要的。",
+"我時常嫉妒別人的好運或財富,我不喜歡處在際遇比我好的人群中。",
+"在社交場合中,我總是避免呈現出自己的真面目,因為我怕會有不得體的言語或行為出現,所以盡可能的有所保留。",
+"我通常必須確定對方是真正喜歡我後,才會與他做更深一層的交往。",
+"在社交場合中,我是個非常有自信的人,能夠輕鬆自然、反應得體的與人交談,不會讓人有矯揉造作、不安的感覺。",
+"我喜歡獨自爬山、逛街、看電影等,並不需要任何人,甚至家人的陪伴。我喜愛個人自由清靜的空間。",
+"我偶爾會捏造一個故事或是歪曲事實,然後看看別人的反應。但這樣做只是想開別人玩笑罷了,一點惡意也沒有。",
+"仔細想想我覺得在生活中真正喜歡,或能安心享樂的事實在不多。",
+"我不是個一板一眼的人,我喜歡做些緊張、刺激的事,如:飆車、酒後開車等,但我很明瞭自己的所作所為。",
+"我喜歡精打細算,雖然有人認為我吝嗇,但我相信每個人應該都有儲蓄的好習慣,以備不時之需。",
+"我周遭親近的人,常說我老是看到事情不好的一面,他們說我的心態太消極悲觀了。",
+"當我情緒不好時,我會有相當誇張的表達方式,例如:大哭一場,摔破物品以洩憤,或是有自殘的行為出現。",
+"我的親友說,我小時候是個專門惹事生非的小搗蛋。我曾逃學、打架、說謊等,都是令人頭痛的事情。",
+"我從小到現在,一直是大家心目中的乖寶寶,從不做一些違反規定父母、師長不允許的事情。",
+"我對靈異的事情很感興趣,我有敏銳的「第六感」,常常在事情還未發生前,我就能感受到有某件事將要發生。",
+"在社交場合或平日活動中,我總喜歡成為眾人注意力的焦點,我不太安於配角或跑龍套的這種角色。",
+"我崇尚浪漫、狂野的愛情,常常瘋狂地投入一段戀情中。但有時會因為他一些小缺點,而無法克制厭惡及憤怒的情緒。",
+"有人說我沒有什麼情緒變化,表情冷漠,甚至有人說我是「撲克臉孔」。",
+"我凡事不喜歡被束縛、被限制,做事一向隨興而為。擬定生涯規劃,依循行事規章等對我而言太難了。",
+"我深信「行萬里路,勝讀萬卷書」,所以旅遊是我最愛從事的休閒活動。",
+"雖然大家都說「內在美」比「外在美」重要,可是我覺得個人的外貌是不可忽略的,所以我每天會花費時間來裝扮自己,確定自己看起來美麗動人或是英俊瀟灑。",
+"當與他人相處時,我發現有時候自己無法完全放鬆下來,享受歡樂的時光,除非我確定其他人的需求都被滿足。",
+"我通常讓我的家人和伴侶,來幫我做重要的決定。",
+"當有人真正關心我給予我許多的關懷和溫馨時,我通常會覺得很不自在,且難以接受;但我喜愛為他人解決問題。",
+"我是完美主義者,對自我往往要求嚴苛,所以我比一般人花更多的時間在我份內的工作上。",
+"或許我有點自我膨脹,可是我自認自己是個蠻特殊的人物。",
+"因有時我會與他人保持某些距離,而且在生活和衣著上,有自己特殊的風格,因此有些人認為我是個「奇怪的人」。",
+"有時候,我會有莫名的罪惡感,雖然我總不明白是什麼因素,使自己有這樣的感覺。",
+"我不喜歡人聲沸騰、摩肩接踵的廟會、狂歡晚會、社交場合、人與人間的頻繁相處,讓我身心疲憊。",
+"我的同事和上司,並不能真正地瞭解和激賞我的才華。",
+"除了我親近的家人外,我沒有真正知心的朋友。",
+"在陌生的人群中,我常常會不知所措、害羞或焦慮。",
+"我不是自律嚴謹的人,做事常常會半途而廢,要不然就是用拖拖拉拉,差不多的辦法來草草了事、敷衍交差。",
+"我是個非常注重隱私的人,我不輕易讓人分享我個人的資料。因為你永遠不知道別人會如何利用你的資料,來做為謀取鉅利或算計你的工具。",
+"我喜歡賣弄風情,並且希望別人覺得我很性感、很有吸引力。",
+"當一段親密的友誼或愛情結束時,我會覺得孤單無依、徬徨無助,常不自覺地急著尋求新的親密關係。",
+"我認為嚴厲的管教是非常重要的,我深信「玉不琢,不成器」,孩子不打不成材。",
+"當別人批評或是稱讚我時,我通常都不會有明顯或強烈的情緒反應。",
+"我的情緒會因外在的環境起伏變化很大,可是我也沒法控制。",
+"我喜歡呼朋引伴、聚餐、唱卡拉OK,我就是受不了獨處,尤其熱愛與一群同伴狂歡作樂,參加派對,享受刺激。",
+"如果我有選擇餘地的話,我寧願獨自處理事情或獨來獨往。",
+"我喜歡用一種生動、活潑、戲劇性的方式來表達我的感覺,或描述事件。",
+"我的脾氣是大家公認的暴躁,不管是誰把我惹毛了,我都會禁不住地與對方爭辯或是打架。",
+"我對別人心目中的企圖有種特殊敏銳的覺察力,即使這個企圖只在醞釀的初期階段,我都能感受得到。",
+"當我處在很大的壓力下,我可能變得有點偏執,而疑神疑鬼的,或以置之不理的方式來做逃避。",
+"我對遊走在觸犯法令邊緣,不會被懲罰的生活非常崇尚。",
+"我的情緒平和,很少有大吼大叫,失去控制的狀況發生。",
+"我太依賴我生命中親密的夥伴了,我常擔心如果有一天我失去他的話,可能沒能力照顧自己。",
+"我喜歡付出、滿足別人的需求,有時我覺得自己為他人付出太多了。",
+"我是個成功,有聲名地位或是有才幹的人,所以我覺得在某些場合,我應該得到某方面特殊的禮遇。",
+"有人說我有「收集癖」,對那些老舊、無用,沒有任何實質或是精神上存在價值的物品,我總是捨不得將它們丟棄。",
+"我不喜歡一成不變的工作,往往為了要做我自己喜歡做的事,而無法將份內的工作,做的很完善。有時我也會使出「拖」字手段,或是甚至把該做的事,忘得一乾二淨。",
+"我的朋友常說我猶如古代俠客,喜歡「路見不平,拔刀相助」,簡直是現代的「正義之聲」。",
+"有人說我驕傲自大,可是我並不在乎。",
+"在大型的社交場合中,常令我感到焦慮不安,即使與熟識的人一起,我總感覺得別人用評估的眼光打量著我。",
+"我是個有名的膽小鬼,幾乎什麼新奇的玩意兒都不肯輕易嘗試,我喜歡生活在熟悉的生活空間裡。",
+"我的朋友常說我是個理智型的人,每件事都會再三思考及分析後,才會去實行。有時甚至會有過度憂煩的傾向。",
+"我不太在乎別人的看法,我的情緒表達隨著我當時內在感觸而定,所以有時會有不合時宜的事件發生。",
+"我沒有耐性長期地從事一成不變的工作,對於擬定處理生活必需的雜事等不在行,所以有些人認為我不負責任。",
+"有人曾告訴過我,我的情緒表達方式十分誇張,令他們搞不清楚事情的真實性到底有多少。",
+"我家中的成員,或公司的部屬,抱怨我制定的太多的原則,且太過嚴格了,沒有給予他們足夠獨立自主的空間。",
+"若有人對我不忠誠、不尊重,或是有不公平的待遇,我可能懷恨在心,久久無法釋懷。",
+"在幫助別人為別人服務的過程中,我找到了人生的意義和最大的快樂。",
+"如果當我「該」做的事和我「想」做的事,發生衝突時,我會矛盾、掙扎,雖然免不了有愧疚之心,但十之八九我會選擇我「想」做的事。",
+"我可能是個有脅迫力的人,因為有人曾告訴我,他們遵循我的指令,是因為他們怕我。",
+"我非常地情緒化,一點小事就足以使我大發雷霆,且在短短的幾個小時中,我就歷經巨大的情緒變化,從快樂到憂傷,從焦慮到生氣,可是往往負面的情緒都不會持續太久。",
+"我不喜歡嘗試冒險或新奇的事物,一則我怕面對不可知,再則我怕會丟人現眼。",
+"我喜歡放縱自己,一切跟著感覺走,如果感覺對時,我可能會買醉狂歡,也可能會飆車或是「大血拼」。",
+"我不喜歡人與人之間勾心鬥角、交際應酬等這些錯綜複雜的人際關係,我最大的心願就是能放下世俗的一切,隱居山林。",
+"常有人說我是個「工作狂」,即使目前我已有足夠的家產,我仍然會認真工作。",
+"我喜歡想像自己擁有財富、權勢或名氣,而備受讚賞,或是由於自己的才能或美貌受到大眾的喜好及崇拜。",
+"我會盡我所能的為他人服務,有時免不了造成本身的一些不便,但我還是會想盡辦法讓別人喜歡我。",
+"我常常會誤認別人有意要追求我,或是對我有好感,這種揣測,有時不免對我造成困擾或不可避免的尷尬場面。",
+"在性方面,我沒有強烈的需求和慾望。",
+"在生活中,我不會因為某方面的成功而欣喜異常,我總會意識到在人生的某一方面,有困難發生。",
+"在與人相處時,我喜歡表現出附和對方的態度,當我不同意某個人的看法,我只會把不滿的情緒放在心裡。",
+"我是為「情」而活的人,如果我生命中沒有了愛情,同時,我就失去生存的意義。",
+"有時候我覺得周遭的人,包括:家人、朋友、同事,對我並不像是我期待中那麼的忠誠。",
+"我相信在某些狀況下,你必須犧牲他人的利益,以達成自我的目標。",
+"我對上位者或是上司,常帶著批判的態度,或許我並沒有真正瞭解到他們的立場,但我相信我能把事情處理得比他們好。",
+"別人覺得我是一個非常幽默風趣的人,我可以把日常平凡無奇的事,描述得生動有趣、引人入勝。",
+"我發現自己會嘲諷別人的不幸,雖然我不以這種行徑為榮,但我只想表達這是個「弱肉強食」的社會狀態罷了!",
+"對自己沒有強烈的自信心,常對自我的能力感到懷疑,有時候甚至覺得自己一無是處。",
+"我喜歡從事激烈的球類運動,我覺得運動的目的不僅在鍛鍊身體,更重要的是在享受「勝利」的滋味。",
+"我不是積極主動的人,在團體中,我寧願做個追隨者,成為一個安份守己且十分忠誠的成員。",
+"我會毫不猶豫地向人傾訴我的困擾,可是當別人想給予我資助及關懷時,我往往無法坦然接受。",
+"有人說我說話有時太過尖酸刻薄,不留情面,但如果他們認為我太過吹毛求疵的話,應該勇敢為自己辯護。",
+"我想我的接收力與大多數的人不同,有時我可以感受到一些奇怪的事,雖然我無法證實或解說這些現象,但對我而言,它們是那麼的真確,例如:看到死去的親人或感受到特殊的能量等等。",
+"我希望自己不要那麼擔憂別人對我在社交場合的看法。",
+"當別人要求我去做一件我不想做的事,我會以爭辯生氣或是鬧彆扭的方法來做抗爭,讓他們不能輕易「順利得逞」。",
+"我是個自由激進的人,會向傳統的思想挑戰,也不在乎別人對我有何看法。",
+"有人說我太過固執己見,凡事都要依照自己特有的行事方法去做,且親自監督。我寧願別人罵我老頑固,也不要他們胡搞一通或是半途而廢。",
+"我有時候會為了捉弄他人、逃避責任或是為自己牟利而不告訴別人事實的真相。",
+"我是個缺乏安全感的人,在我的親密關係中,我經常擔心伴侶對我是否忠誠。",
+"我喜歡保有個人隱私,因此對個人情感、嗜好、事件都多做保留,因此有人說我是個世故圓滑的人,常常猜不到我葫蘆裡賣的是什麼藥。",
+"我對人心懷戒心,不輕易信賴他人,有時我試著去相信別人,但常不自禁的擔心他會佔我便宜。",
+"有人曾認為我常無病呻吟,但他們不瞭解這些不幸的事情,的確曾發生在我身上。",
+"有人說我會自找苦吃,我不斷地與一些令自己失望的人交往,讓自己傷心痛苦,我實在無法理解為什麼自己這麼的缺乏判斷力。",
+"我位居上流階層,和我交往的人,或是我所加入的組織、俱樂部等,都具有相當的影響力和重要性。",
+"我覺得我的內在世界空洞,不知自己的定位在那裡,無法尋找到我人生的目標和意義何在。",
+"我喜歡自己平常做事的方法,如果別人試著想改變我這些行事原則的話,我會固執己見,對別人的意見不加以理睬。",
+"有人說,我是個拖拖拉拉或差不多先生(差不多小姐),我的人生觀是:人生苦短,要及時行樂,凡事做得差不多就可以,不需要事事追求完美。",
+"有人說,我表達的方式很獨特,他們認為我所說的事,對他們而言太過深奧,或者甚至不瞭解我談話的內容。",
+"我認為,我不需要對自己過去不良的行為感到內疚,或是有任何的罪惡感。",
+"別人對我說,我對自我的要求太過嚴苛,常為一些小事自責過深。",
+"有人說我很自我中心,雖然我自認瞭解別人的感受,但他們老是告訴我,我對他們的感受一點概念也沒有。",
+"對我而言,嫉妒是人生的一部分,不是我嫉妒著別人的財富、成就,就是有人可能嫉妒著我所擁有的一切。",
+"我覺得男子漢大丈夫,有時為了達到目的,必須不擇手段,甚至耍陰、耍狠,犧牲朋友和同事的利益,也可以偶爾為之。",
+"我不是個非常主觀的人,所以容易受他人影響,我必須時時提醒自己這一點,要不然往往會為他人的意見所左右。",
+"在人群中,我覺得安全無憂,若要孤獨地去面對人生,我會徬徨失措,完全不知該如何來照料自己。",
+"有人認為我太過保守和嚴謹,可是我深信沒有任何理由和藉口,可以原諒那些違反道德規範的行為。",
+"我不是快樂無憂的人,有很多憂煩壓在心上,並且我有比較嚴謹的傾向。",
+"我有天馬行空的想像力,在朋友圈中,我以點子多出名,有人說我是個「點子王」。",
+"我喜歡接受讚美,當我的才華被肯定時,是我最高興的一件事,一旦覺得自己被忽視時,我會想辦法博取他人對我的讚賞。",
+"我有時很擔心與自己關係親近的人,或是親近朋友不喜歡我,我會去試探並要他們再三保證對我的忠誠和愛戀,我想這對他們而言,可能會造成某種程度的困擾。",
+"在人數不多的工作場合,我覺得比較自在,因為我受不了我的工作能力被其他同事懷疑、批評。",
+"我的朋友說,我是個善變的動物,他們比喻我的情緒猶如翻書,喜怒無常,不是個容易相處的人。",
+"在人際關係中,不管在公司或是在家裡,我喜歡居於主控的地位,有時讓他人覺得我很粗魯或是嚴苛,而不自覺。",
+"朋友說我是個有才幹的人,我會利用這些才能來幫助別人,但似乎沒有利用到這些天賦,來使自己在事業上或是家庭中得到利益。",
+"我喜歡嘗試新奇事物和不同的生活型態,如果有機會的話,我不排斥嘗試毒品或是到蠻荒地區冒險。",
+"我發現有一些人故意做一些事煩擾、侮辱我,他們的目的只是想挑釁我。",
+"有人說我天真無知的可愛,對人的包容性也出奇地大,有時候會被利用,甚至有時被人利用而不自知。",
+"我並不需要與很多人建立起親近的人際關係,我會把大部分的精力,專注在思想哲理、抽象概念和超自然等內心世界的探討上。",
+"當我遇到挫折時,我喜歡自己面對困難,當別人對我伸出援手幫助我時,我往往會覺得不自在,無法坦然接受別人所釋出的善意。"];
+var N=Q.length, KEY="p14v2";
+var S={view:"intro",i:0,a:{},name:"",blood:"",birth:"",showMap:false};
+try{var saved=JSON.parse(localStorage.getItem(KEY)||"null");if(saved&&saved.a){S.a=saved.a;S.name=saved.name||"";S.blood=saved.blood||"";S.birth=saved.birth||"";S.i=saved.i||0}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({a:S.a,name:S.name,blood:S.blood,birth:S.birth,i:S.i}))}catch(e){}}
+function count(){return Object.keys(S.a).length}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var app=document.getElementById("app");
+
+function intro(){
+  var c=count();
+  app.innerHTML='<div class="stack">'+
+  '<div class="stack" style="gap:6px"><div class="eyebrow">130 題 · 14 種人格典型</div><h1>14 人格心座測驗</h1>'+
+  '<p class="muted" style="margin:0">依直覺作答,不用想太久。每題選一個最接近你的答案。</p></div>'+
+  '<div class="panel stack"><h2>參加者資料</h2><div class="row">'+
+  '<label class="f">姓名<input id="fName" value="'+esc(S.name)+'" placeholder="選填"></label>'+
+  '<label class="f">生日<input id="fBirth" type="date" value="'+esc(S.birth)+'"></label></div><div class="hint">作答進度會保存在這台裝置上。</div></div>'+
+  '<button class="primary" id="go">'+(c?(c===N?'查看結果':'繼續作答(已完成 '+c+' 題)'):'開始測驗')+'</button>'+
+  (c?'<button class="ghost" id="reset">清除作答,重新開始</button><div id="cfm"></div>':'')+
+  '</div>';
+  function grab(){S.name=fName.value.trim();S.birth=fBirth.value;save()}
+  ["fName","fBirth"].forEach(function(id){document.getElementById(id).addEventListener("change",grab)});
+  go.onclick=function(){grab();if(c===N){S.view="result"}else{S.view="quiz";S.i=firstMissing()}render()};
+  if(c){reset.onclick=function(){cfm.innerHTML='<div class="row" style="margin-top:4px"><span class="hint" style="flex-basis:100%">確定要清除全部 '+c+' 題的答案嗎?</span><button id="yes" class="primary">清除</button><button id="no">取消</button></div>';
+    yes.onclick=function(){S.a={};S.i=0;save();render()};no.onclick=function(){cfm.innerHTML=""}}}
+}
+function firstMissing(){for(var i=0;i<N;i++)if(S.a[i+1]===undefined)return i;return N-1}
+
+function quiz(){
+  var n=S.i+1,c=count(),v=S.a[n];
+  var opts=[["是的",2],["或許",1],["不是",0]];
+  app.innerHTML='<div class="bar"><div class="top"><button class="ghost" id="home" style="padding:4px 10px">← 首頁</button><span>已答 '+c+' / '+N+'</span><button class="ghost" id="tmap" style="padding:4px 10px">'+(S.showMap?'收起總覽':'題目總覽')+'</button></div><div class="track"><i style="width:'+(c/N*100)+'%"></i></div></div>'+
+  '<div class="stack" style="margin-top:12px">'+
+  (S.showMap?'<div class="panel stack" style="padding:14px"><div class="map">'+Q.map(function(_,k){var m=k+1;return '<button data-j="'+k+'" class="'+(S.a[m]!==undefined?'done':'')+(k===S.i?' cur':'')+'">'+m+'</button>'}).join("")+'</div><div class="hint">深色為已作答,點題號可跳題修改。</div></div>':'')+
+  '<div class="qnum">'+n+'<small>/ '+N+'</small></div>'+
+  '<div class="qtext">'+Q[S.i]+'</div>'+
+  '<div class="opts">'+opts.map(function(o,k){return '<button data-v="'+o[1]+'" class="'+(v===o[1]?'on':'')+'">'+o[0]+'<span>'+o[1]+' 分</span></button>'}).join("")+'</div>'+
+  '<div class="nav"><button id="prev"'+(S.i===0?' disabled':'')+'>上一題</button>'+
+  (c===N?'<button class="primary" id="fin">查看結果</button>':'<button id="next">'+(S.i===N-1?'找未答題':'下一題')+'</button>')+'</div>'+
+  '<div class="hint">電腦可用鍵盤 1 / 2 / 3 作答,← → 切換題目。</div></div>';
+  app.querySelectorAll(".opts button").forEach(function(b){b.onclick=function(){answer(+b.dataset.v)}});
+  app.querySelectorAll(".map button").forEach(function(b){b.onclick=function(){S.i=+b.dataset.j;save();render()}});
+  home.onclick=function(){S.view="intro";render()};
+  tmap.onclick=function(){S.showMap=!S.showMap;render()};
+  prev.onclick=function(){if(S.i>0){S.i--;save();render()}};
+  if(window.next&&next.id==="next")next.onclick=function(){S.i=S.i<N-1?S.i+1:firstMissing();save();render()};
+  var f=document.getElementById("fin");if(f)f.onclick=function(){S.view="result";render()};
+}
+var lock=false;
+function answer(v){
+  if(lock)return;var n=S.i+1;S.a[n]=v;save();
+  app.querySelectorAll(".opts button").forEach(function(b){b.classList.toggle("on",+b.dataset.v===v)});
+  if(count()===N&&S.i===N-1){render();return}
+  lock=true;setTimeout(function(){lock=false;
+    if(S.i<N-1)S.i++;else S.i=firstMissing();
+    if(count()===N&&S.a[S.i+1]!==undefined){render();return}
+    save();render()},220);
+}
+
+function scores(){return MAP.map(function(m,k){return{n:TYPES[k],s:m.reduce(function(t,q){return t+(S.a[q]||0)},0),k:k}})}
+function result(){
+  var sc=scores(),rank=sc.slice().sort(function(a,b){return b.s-a.s||a.k-b.k}),cut=rank[2].s;
+  var W=700,H=300,L=34,R=12,T=14,B=46,cw=(W-L-R)/14,y=function(v){return T+(H-T-B)*(1-v/18)};
+  var g='';for(var t=0;t<=18;t+=3){g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(t)+'" y2="'+y(t)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-8)+'" y="'+(y(t)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+t+'</text>'}
+  var pts=sc.map(function(o,k){return[L+cw*(k+.5),y(o.s)]});
+  var path='<polyline points="'+pts.map(function(p){return p.join(",")}).join(" ")+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>';
+  var dots=sc.map(function(o,k){var hi=o.s>=cut&&o.s>0;return '<circle cx="'+pts[k][0]+'" cy="'+pts[k][1]+'" r="'+(hi?6:4)+'" fill="'+(hi?'var(--mark)':'var(--surface)')+'" stroke="var(--accent)" stroke-width="2"/>'+
+    '<text x="'+pts[k][0]+'" y="'+(pts[k][1]-11)+'" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">'+o.s+'</text>'+
+    '<text x="'+pts[k][0]+'" y="'+(H-B+20)+'" text-anchor="middle" font-size="12" fill="var(--'+(hi?'ink':'muted')+')" font-weight="'+(hi?700:400)+'">'+o.n+'</text>'}).join("");
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="14 種人格典型分數曲線">'+g+path+dots+'</svg>';
+  var who=[["姓名",S.name],["生日",S.birth]].filter(function(x){return x[1]}).map(function(x){return '<span>'+x[0]+' <b>'+esc(x[1])+'</b></span>'}).join("");
+  app.innerHTML='<div class="stack">'+
+  '<div class="stack" style="gap:6px"><div class="eyebrow">測驗結果</div><h1>你的人格曲線</h1>'+(who?'<div class="who">'+who+'</div>':'')+'</div>'+
+  '<div class="podium">'+rank.slice(0,3).map(function(o,k){return '<div><div class="rk">第 '+(k+1)+' 名</div><div class="nm">'+o.n+'型</div><div class="sc">'+o.s+' / 18</div></div>'}).join("")+'</div>'+
+  '<div class="panel stack" style="padding:16px 12px"><h2 style="padding:0 6px">測試題目曲線圖</h2><div class="chartbox">'+svg+'</div><div class="hint" style="padding:0 6px">金色點為得分最高的典型(同分並列)。</div></div>'+
+  '<div class="panel stack"><h2>分數排名</h2><div class="bars">'+rank.map(function(o){return '<div class="b'+(o.s>=cut&&o.s>0?' hi':'')+'"><span>'+o.n+'型</span><span class="t"><i style="width:'+(o.s/18*100)+'%"></i></span><span class="v">'+o.s+'</span></div>'}).join("")+'</div></div>'+
+  '<button class="primary" id="copy">複製結果文字</button><div class="toast" id="toast" aria-live="polite"></div>'+
+  '<textarea id="ctext" readonly hidden style="width:100%;min-height:9em;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);color:var(--ink)"></textarea>'+
+  '<div class="row"><button id="edit">返回修改答案</button><button id="home">回首頁</button></div>'+
+  '<div class="hint">註:原表第 24、44 題同時計入貓頭鷹型與駱駝型,依原表計分。</div></div>';
+  var txt='【14 人格心座測驗結果】\n'+(S.name?'姓名:'+S.name+'\n':'')+(S.birth?'生日:'+S.birth+'\n':'')+
+    '前三名:'+rank.slice(0,3).map(function(o){return o.n+'型 '+o.s}).join('、')+'\n\n'+sc.map(function(o){return o.n+'型 '+o.s}).join('\n');
+  copy.onclick=function(){var done=function(){toast.textContent="已複製,可以貼到 LINE 或訊息裡。"};
+    var fail=function(){ctext.value=txt;ctext.hidden=false;ctext.focus();ctext.select();toast.textContent="無法自動複製,請手動選取下方文字複製。"};
+    try{navigator.clipboard.writeText(txt).then(done,fail)}catch(e){fail()}};
+  edit.onclick=function(){S.view="quiz";S.i=0;S.showMap=true;render()};
+  home.onclick=function(){S.view="intro";render()};
+}
+function render(){window.scrollTo(0,0);if(S.view==="intro")intro();else if(S.view==="quiz")quiz();else result()}
+document.addEventListener("keydown",function(e){
+  if(S.view!=="quiz"||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
+  if(e.key==="1")answer(2);else if(e.key==="2")answer(1);else if(e.key==="3")answer(0);
+  else if(e.key==="ArrowLeft"&&S.i>0){S.i--;save();render()}
+  else if(e.key==="ArrowRight"&&S.i<N-1){S.i++;save();render()}
+});
+render();
+</script>
+
+</body></html>
